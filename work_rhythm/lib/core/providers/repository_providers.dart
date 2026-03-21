@@ -100,3 +100,6 @@ final getDailyReportProvider = Provider<GetDailyReport>((ref) {
 final getWeeklyReportProvider = Provider<GetWeeklyReport>((ref) {
     return GetWeeklyReport(ref.watch(getDailyReportProvider));
 });
+
+// ---------- Timer ViewModel — defined in presentation/viewmodels/timer_viewmodel.dart ----------
+// timerViewmodelProvider is declared in that file to keep freezed & Riverpod co-located.
