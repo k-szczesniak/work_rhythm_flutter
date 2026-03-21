@@ -7,6 +7,8 @@ import 'core/router/app_router.dart';
 import 'presentation/theme/app_theme.dart';
 import 'services/foreground_service/foreground_service_manager.dart';
 import 'services/foreground_service/timer_handler.dart';
+import 'services/notification/notification_scheduler.dart';
+import 'services/notification/notification_service.dart';
 
 // Register the task handler entry point before any isolate work.
 @pragma('vm:entry-point')
@@ -24,12 +26,28 @@ void main() async {
     );
 }
 
-class WorkRhythmApp extends ConsumerWidget {
+class WorkRhythmApp extends ConsumerStatefulWidget {
 
     const WorkRhythmApp({super.key});
 
     @override
-    Widget build(BuildContext context, WidgetRef ref) {
+    ConsumerState<WorkRhythmApp> createState() => _WorkRhythmAppState();
+}
+
+class _WorkRhythmAppState extends ConsumerState<WorkRhythmApp> {
+
+    @override
+    void initState() {
+        super.initState();
+        // Kick off async init after the first frame so the ProviderScope is ready.
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+            ref.read(notificationServiceProvider).init();
+            ref.read(notificationSchedulerProvider).start();
+        });
+    }
+
+    @override
+    Widget build(BuildContext context) {
         final router = ref.watch(routerProvider);
 
         return DynamicColorBuilder(
