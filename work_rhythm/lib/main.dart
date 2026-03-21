@@ -1,7 +1,10 @@
+import 'package:dynamic_color/dynamic_color.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_foreground_task/flutter_foreground_task.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'core/router/app_router.dart';
+import 'presentation/theme/app_theme.dart';
 import 'services/foreground_service/foreground_service_manager.dart';
 import 'services/foreground_service/timer_handler.dart';
 
@@ -21,30 +24,25 @@ void main() async {
     );
 }
 
-class WorkRhythmApp extends StatelessWidget {
+class WorkRhythmApp extends ConsumerWidget {
+
     const WorkRhythmApp({super.key});
 
     @override
-    Widget build(BuildContext context) {
-        return MaterialApp(
-            title: 'Work Rhythm',
-            debugShowCheckedModeBanner: false,
-            theme: ThemeData(
-                colorScheme: ColorScheme.fromSeed(
-                    seedColor: const Color(0xFF4CAF50),
-                    brightness: Brightness.dark,
-                ),
-                useMaterial3: true,
-            ),
-            home: const Scaffold(
-                backgroundColor: Color(0xFF0F1117),
-                body: Center(
-                    child: Text(
-                        'Work Rhythm — Faza 2 gotowa',
-                        style: TextStyle(color: Colors.white),
-                    ),
-                ),
-            ),
+    Widget build(BuildContext context, WidgetRef ref) {
+        final router = ref.watch(routerProvider);
+
+        return DynamicColorBuilder(
+            builder: (ColorScheme? lightDynamic, ColorScheme? darkDynamic) {
+                return MaterialApp.router(
+                    title: 'Work Rhythm',
+                    debugShowCheckedModeBanner: false,
+                    theme: AppTheme.light(lightDynamic),
+                    darkTheme: AppTheme.dark(darkDynamic),
+                    themeMode: ThemeMode.dark,
+                    routerConfig: router,
+                );
+            },
         );
     }
 }
