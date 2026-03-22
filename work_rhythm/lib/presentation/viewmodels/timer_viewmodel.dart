@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -60,6 +62,8 @@ class TimerState with _$TimerState {
 
 class TimerViewmodel extends AsyncNotifier<TimerState> {
 
+    Timer? _localTimer;
+
     void _onForegroundData(Object data) {
         if (data is! Map) {
             return;
@@ -107,8 +111,10 @@ class TimerViewmodel extends AsyncNotifier<TimerState> {
         }
 
         _subscribeForegroundData();
+        _startLocalTimer();
 
         ref.onDispose(() {
+            _localTimer?.cancel();
             ForegroundServiceManager.removeTaskDataCallback(_onForegroundData);
         });
 
@@ -210,6 +216,32 @@ class TimerViewmodel extends AsyncNotifier<TimerState> {
     }
 
     // ---------- private ----------
+
+    /// Drives the UI clock every second on platforms where foreground service
+    /// does not deliver ticks (iOS simulator, desktop).
+    /// On Android the foreground service overwrites gross/netSeconds with
+    /// absolute values via [_applyTick], so double-counting is not possible.
+    void _startLocalTimer() {
+        _localTimer?.cancel();
+        _localTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+            final current = state.valueOrNull;
+            if (current == null || current.mode != TimerMode.running) {
+                return;
+            }
+            final newGross = current.grossSeconds + 1;
+            final newNet = current.netSeconds + 1;
+            final newGoalReached = newNet >= current.targetSeconds;
+            final newOvertime =
+                    newGoalReached ? newNet - current.targetSeconds : 0;
+            state = AsyncData(current.copyWith(
+                grossSeconds: newGross,
+                netSeconds: newNet,
+                goalReached: newGoalReached,
+                hasOvertime: newGoalReached,
+                overtimeSeconds: newOvertime,
+            ));
+        });
+    }
 
     void _subscribeForegroundData() {
         ForegroundServiceManager.addTaskDataCallback(_onForegroundData);
